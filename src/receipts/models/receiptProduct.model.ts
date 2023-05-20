@@ -5,8 +5,10 @@ export class ReceiptProduct {
   @Field(() => ID)
   id: string
 
+  @Field()
   name: string
 
+  @Field()
   category: string
 
   @Field(() => Float)

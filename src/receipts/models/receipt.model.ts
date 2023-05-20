@@ -9,8 +9,10 @@ export class Receipt {
   @Field(() => GraphQLISODateTime)
   date: Date
 
+  @Field()
   account: string
 
+  @Field()
   store: string
 
   @Field(() => [ReceiptProduct])
