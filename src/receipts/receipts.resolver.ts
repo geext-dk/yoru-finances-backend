@@ -1,4 +1,3 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common'
 import {
   Args,
   ID,
@@ -8,91 +7,37 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql'
-import * as crypto from 'crypto'
-import { CreateReceiptInput } from './models/createReceipt.input'
-import { ReceiptModel } from './models/receipt.model'
-import { ReceiptProductModel } from './models/receiptProduct.model'
-import { UpdateReceiptInput } from './models/updateReceipt.input'
+import { CreateReceiptInput } from './dto/createReceipt.input'
+import { ReceiptModel } from './dto/receipt.model'
+import { ReceiptProductModel } from './dto/receiptProduct.model'
+import { UpdateReceiptInput } from './dto/updateReceipt.input'
+import { ReceiptsService } from './receipts.service'
 
 @Resolver(() => ReceiptModel)
 export class ReceiptsResolver {
-  receipts: ReceiptModel[] = []
+  constructor(private readonly receiptsService: ReceiptsService) {}
 
   @Query(() => ReceiptModel, { name: 'receipt', nullable: true })
   async getReceipt(@Args('id', { type: () => ID }) id: string) {
-    const receipt = this.receipts.find((r) => r.id === id)
-    if (!receipt) {
-      return undefined
-    }
-
-    const receiptCopy: ReceiptModel = {
-      ...receipt,
-      products: [],
-    }
-
-    return receiptCopy
+    return await this.receiptsService.findById(id)
   }
 
   @Mutation(() => ReceiptModel)
   async createReceipt(
     @Args('createReceiptData') createReceiptData: CreateReceiptInput,
   ) {
-    const receipt: ReceiptModel = {
-      ...createReceiptData,
-      id: crypto.randomUUID(),
-      products: createReceiptData.products.map((p) => ({
-        ...p,
-        id: crypto.randomUUID(),
-      })),
-    }
-
-    this.receipts.push(receipt)
-
-    return receipt
+    return await this.receiptsService.create(createReceiptData)
   }
 
   @Mutation(() => ReceiptModel)
   async updateReceipt(
     @Args('updateReceiptData') updateReceiptData: UpdateReceiptInput,
   ) {
-    const oldIndex = this.receipts.findIndex(
-      (r) => r.id === updateReceiptData.id,
-    )
-    if (oldIndex < 0) {
-      throw new NotFoundException(
-        `Couldn't find receipt with id: '${updateReceiptData.id}'`,
-      )
-    }
-
-    const oldReceipt = this.receipts[oldIndex]
-
-    const unknownProduct = updateReceiptData.products.find(
-      (p) => p.id && oldReceipt.products.some((op) => op.id !== p.id),
-    )
-
-    if (unknownProduct) {
-      throw new BadRequestException(
-        `Unknown receipt product id: '${unknownProduct.id}'`,
-      )
-    }
-
-    const newReceipt: ReceiptModel = {
-      ...updateReceiptData,
-      products: updateReceiptData.products.map((p) => ({
-        ...p,
-        id: p.id || crypto.randomUUID(),
-      })),
-    }
-
-    this.receipts.splice(oldIndex, 1, newReceipt)
-
-    return newReceipt
+    return await this.receiptsService.update(updateReceiptData)
   }
 
   @ResolveField('products', () => [ReceiptProductModel])
   getReceiptProducts(@Parent() receipt: ReceiptModel) {
-    const entityReceipt = this.receipts.find((r) => r.id === receipt.id)
-
-    return entityReceipt?.products || []
+    return this.receiptsService.getReceiptProducts(receipt.id)
   }
 }

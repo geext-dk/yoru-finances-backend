@@ -1,4 +1,6 @@
 import { InputType, OmitType } from '@nestjs/graphql'
+import { Type } from 'class-transformer'
+import { ArrayNotEmpty, ValidateNested } from 'class-validator'
 import { ReceiptModel } from './receipt.model'
 import { ReceiptProductModel } from './receiptProduct.model'
 
@@ -8,6 +10,9 @@ export class CreateReceiptInput extends OmitType(
   ['id', 'products'] as const,
   InputType,
 ) {
+  @ArrayNotEmpty()
+  @ValidateNested()
+  @Type(() => CreateReceiptProductInput)
   products: CreateReceiptProductInput[]
 }
 
