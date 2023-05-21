@@ -1,14 +1,10 @@
 import { Field, Float, ID, ObjectType } from '@nestjs/graphql'
 
 @ObjectType()
-export class ReceiptProduct {
+export class ReceiptProductModel {
   @Field(() => ID)
   id: string
-
-  @Field()
   name: string
-
-  @Field()
   category: string
 
   @Field(() => Float)
