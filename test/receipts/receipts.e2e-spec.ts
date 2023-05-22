@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
 import { AppModule } from '../../src/app.module'
 import { ReceiptModel } from '../../src/receipts/dtos/receipt.model'
-import { ReceiptProductModel } from '../../src/receipts/dtos/receiptProduct.model'
+import { ReceiptProductModel } from '../../src/receipts/dtos/receipt-product.model'
 import { ReceiptsService } from '../../src/receipts/receipts.service'
 
 describe('Receipts', () => {

@@ -6,12 +6,12 @@ import {
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, Repository } from 'typeorm'
-import { CreateReceiptInput } from './dtos/createReceipt.input'
+import { CreateReceiptInput } from './dtos/create-receipt.input'
 import { ReceiptModel } from './dtos/receipt.model'
-import { ReceiptProductModel } from './dtos/receiptProduct.model'
-import { UpdateReceiptInput } from './dtos/updateReceipt.input'
+import { ReceiptProductModel } from './dtos/receipt-product.model'
+import { UpdateReceiptInput } from './dtos/update-receipt.input'
 import { ReceiptEntity } from './entities/receipt.entity'
-import { ReceiptProductEntity } from './entities/receiptProduct.entity'
+import { ReceiptProductEntity } from './entities/receipt-product.entity'
 
 @Injectable()
 export class ReceiptsService {

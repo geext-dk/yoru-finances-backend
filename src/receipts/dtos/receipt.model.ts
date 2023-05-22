@@ -6,7 +6,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator'
-import { ReceiptProductModel } from './receiptProduct.model'
+import { ReceiptProductModel } from './receipt-product.model'
 
 @ObjectType()
 export class ReceiptModel {

@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm'
 import { UserEntity } from '../../users/entities/user.entity'
-import { ReceiptProductEntity } from './receiptProduct.entity'
+import { ReceiptProductEntity } from './receipt-product.entity'
 
 @Entity()
 export class ReceiptEntity {

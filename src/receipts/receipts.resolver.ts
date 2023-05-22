@@ -8,13 +8,13 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql'
-import { CurrentUser } from '../auth/currentUser.decorator'
+import { CurrentUser } from '../auth/current-user.decorator'
 import { GqlAuthGuard } from '../auth/gql-auth.guard'
 import { UserModel } from '../users/dtos/user.model'
-import { CreateReceiptInput } from './dtos/createReceipt.input'
+import { CreateReceiptInput } from './dtos/create-receipt.input'
 import { ReceiptModel } from './dtos/receipt.model'
-import { ReceiptProductModel } from './dtos/receiptProduct.model'
-import { UpdateReceiptInput } from './dtos/updateReceipt.input'
+import { ReceiptProductModel } from './dtos/receipt-product.model'
+import { UpdateReceiptInput } from './dtos/update-receipt.input'
 import { ReceiptsService } from './receipts.service'
 
 @Resolver(() => ReceiptModel)
