@@ -8,7 +8,7 @@
       "ts-jest",
       {
         "astTransformers": {
-          "before": ["test/gql-plugin.ts"]
+          "before": ["test/gql-plugin.js"]
         }
       }
     ]
