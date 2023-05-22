@@ -3,14 +3,17 @@ import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigType } from '@nestjs/config'
 import { GraphQLModule } from '@nestjs/graphql'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import authConfig from './auth/config/auth.config'
 import databaseConfig from './config/database.config'
 import { ReceiptsModule } from './receipts/receipts.module'
+import { AuthModule } from './auth/auth.module'
+import { UsersModule } from './users/users.module'
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
+      load: [databaseConfig, authConfig],
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (dbConfig: ConfigType<typeof databaseConfig>) => ({
@@ -33,6 +36,8 @@ import { ReceiptsModule } from './receipts/receipts.module'
       autoSchemaFile: true,
     }),
     ReceiptsModule,
+    AuthModule,
+    UsersModule,
   ],
 })
 export class AppModule {}

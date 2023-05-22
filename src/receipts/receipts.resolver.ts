@@ -1,3 +1,4 @@
+import { UseGuards } from '@nestjs/common'
 import {
   Args,
   ID,
@@ -7,6 +8,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql'
+import { GqlAuthGuard } from '../auth/gql-auth.guard'
 import { CreateReceiptInput } from './dtos/createReceipt.input'
 import { ReceiptModel } from './dtos/receipt.model'
 import { ReceiptProductModel } from './dtos/receiptProduct.model'
@@ -17,11 +19,13 @@ import { ReceiptsService } from './receipts.service'
 export class ReceiptsResolver {
   constructor(private readonly receiptsService: ReceiptsService) {}
 
+  @UseGuards(GqlAuthGuard)
   @Query(() => ReceiptModel, { name: 'receipt', nullable: true })
   async getReceipt(@Args('id', { type: () => ID }) id: string) {
     return await this.receiptsService.findById(id)
   }
 
+  @UseGuards(GqlAuthGuard)
   @Mutation(() => ReceiptModel)
   async createReceipt(
     @Args('createReceiptData') createReceiptData: CreateReceiptInput,
@@ -29,6 +33,7 @@ export class ReceiptsResolver {
     return await this.receiptsService.create(createReceiptData)
   }
 
+  @UseGuards(GqlAuthGuard)
   @Mutation(() => ReceiptModel)
   async updateReceipt(
     @Args('updateReceiptData') updateReceiptData: UpdateReceiptInput,
