@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
@@ -14,6 +15,8 @@ import { ReceiptProductEntity } from './entities/receiptProduct.entity'
 
 @Injectable()
 export class ReceiptsService {
+  private readonly logger = new Logger(ReceiptsService.name)
+
   constructor(
     private dataSource: DataSource,
     @InjectRepository(ReceiptEntity)
@@ -26,6 +29,7 @@ export class ReceiptsService {
     const receipt = await this.receiptsRepository.findOneBy({ id })
 
     if (!receipt) {
+      this.logger.verbose(`Couldn't find receipt with id: '${id}'`)
       return null
     }
 
@@ -55,6 +59,8 @@ export class ReceiptsService {
       await em.save([...newReceipt.products, newReceipt])
     })
 
+    this.logger.verbose(`Created a new receipt with id: '${newReceipt.id}'`)
+
     return newReceipt
   }
 
@@ -67,6 +73,7 @@ export class ReceiptsService {
     })
 
     if (!receipt) {
+      this.logger.verbose(`Couldn't find receipt with id: '${input.id}'`)
       throw new NotFoundException(
         `Couldn't find receipt with id: '${input.id}'`,
       )
@@ -77,6 +84,10 @@ export class ReceiptsService {
     )
 
     if (unknownProduct) {
+      this.logger.warn(
+        `receipt product with id '${unknownProduct.id}' doesn't exist`,
+      )
+
       throw new BadRequestException(
         `Unknown receipt product id: '${unknownProduct.id}'`,
       )
@@ -110,10 +121,12 @@ export class ReceiptsService {
       await em.save([...newProducts, receipt])
     })
 
+    this.logger.verbose(`Updated receipt with id: '${receipt.id}'`)
+
     return this.mapToDto(receipt)
   }
 
-  async getReceiptProducts(receiptId: string): Promise<ReceiptProductModel[]> {
+  async findReceiptProducts(receiptId: string): Promise<ReceiptProductModel[]> {
     const receiptProducts = await this.receiptProductsRepository.find({
       where: { receiptId },
     })

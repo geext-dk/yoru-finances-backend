@@ -37,7 +37,11 @@ export class ReceiptsResolver {
   }
 
   @ResolveField('products', () => [ReceiptProductModel])
-  getReceiptProducts(@Parent() receipt: ReceiptModel) {
-    return this.receiptsService.getReceiptProducts(receipt.id)
+  async getReceiptProducts(@Parent() receipt: ReceiptModel) {
+    if (receipt.products?.length) {
+      return receipt.products
+    }
+
+    return await this.receiptsService.findReceiptProducts(receipt.id)
   }
 }
