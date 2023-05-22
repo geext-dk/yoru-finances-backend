@@ -3,10 +3,12 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm'
+import { UserEntity } from '../../users/entities/user.entity'
 import { ReceiptProductEntity } from './receiptProduct.entity'
 
 @Entity()
@@ -34,4 +36,10 @@ export class ReceiptEntity {
 
   @OneToMany(() => ReceiptProductEntity, (product) => product.receipt)
   products: ReceiptProductEntity[]
+
+  @Column()
+  userId: string
+
+  @ManyToOne(() => UserEntity, (user) => user.receipts)
+  user: UserEntity
 }

@@ -25,22 +25,28 @@ export class ReceiptsService {
     private receiptProductsRepository: Repository<ReceiptProductEntity>,
   ) {}
 
-  async findById(id: string): Promise<ReceiptModel | null> {
-    const receipt = await this.receiptsRepository.findOneBy({ id })
+  async findById(id: string, userId: string): Promise<ReceiptModel | null> {
+    const receipt = await this.receiptsRepository.findOneBy({ id, userId })
 
     if (!receipt) {
-      this.logger.verbose(`Couldn't find receipt with id: '${id}'`)
+      this.logger.verbose(
+        `Couldn't find receipt with id '${id}' for user '${userId}'`,
+      )
       return null
     }
 
     return this.mapToDto(receipt)
   }
 
-  async create(input: CreateReceiptInput): Promise<ReceiptEntity> {
+  async create(
+    input: CreateReceiptInput,
+    userId: string,
+  ): Promise<ReceiptEntity> {
     const newReceipt = this.receiptsRepository.create()
     newReceipt.account = input.account
     newReceipt.store = input.store
     newReceipt.date = input.date
+    newReceipt.userId = userId
     newReceipt.products = []
 
     for (const inputProduct of input.products) {
@@ -64,16 +70,21 @@ export class ReceiptsService {
     return newReceipt
   }
 
-  async update(input: UpdateReceiptInput): Promise<ReceiptModel> {
+  async update(
+    input: UpdateReceiptInput,
+    userId: string,
+  ): Promise<ReceiptModel> {
     const receipt = await this.receiptsRepository.findOne({
-      where: { id: input.id },
+      where: { id: input.id, userId },
       relations: {
         products: true,
       },
     })
 
     if (!receipt) {
-      this.logger.verbose(`Couldn't find receipt with id: '${input.id}'`)
+      this.logger.verbose(
+        `Couldn't find receipt with id '${input.id}' for user '${userId}'`,
+      )
       throw new NotFoundException(
         `Couldn't find receipt with id: '${input.id}'`,
       )
