@@ -1,4 +1,4 @@
-import { Field, Float, ID, ObjectType } from '@nestjs/graphql'
+import { Field, Float, ID, Int, ObjectType } from '@nestjs/graphql'
 import { Min, MinLength } from 'class-validator'
 
 @ObjectType()
@@ -12,7 +12,7 @@ export class ReceiptProductModel {
   @MinLength(1)
   category: string
 
-  @Field(() => Float)
+  @Field(() => Int)
   @Min(0)
   pricePerUnit: number
 
@@ -20,7 +20,7 @@ export class ReceiptProductModel {
   @Min(0)
   quantity: number
 
-  @Field(() => Float)
+  @Field(() => Int)
   @Min(0)
   totalPrice: number
 }

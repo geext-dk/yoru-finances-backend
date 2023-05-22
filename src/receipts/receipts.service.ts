@@ -3,66 +3,77 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import * as crypto from 'crypto'
-import { ReceiptProductModel } from './dto/receiptProduct.model'
-import { ReceiptModel } from './dto/receipt.model'
-
-export type CreateReceiptModel = Omit<ReceiptModel, 'id' | 'products'> & {
-  products: Omit<ReceiptProductModel, 'id'>[]
-}
-
-export type UpdateReceiptModel = Omit<ReceiptModel, 'products'> & {
-  products: (Omit<ReceiptProductModel, 'id'> &
-    Partial<Pick<ReceiptProductModel, 'id'>>)[]
-}
+import { InjectRepository } from '@nestjs/typeorm'
+import { DataSource, Repository } from 'typeorm'
+import { CreateReceiptInput } from './dtos/createReceipt.input'
+import { ReceiptModel } from './dtos/receipt.model'
+import { ReceiptProductModel } from './dtos/receiptProduct.model'
+import { UpdateReceiptInput } from './dtos/updateReceipt.input'
+import { ReceiptEntity } from './entities/receipt.entity'
+import { ReceiptProductEntity } from './entities/receiptProduct.entity'
 
 @Injectable()
 export class ReceiptsService {
-  private receipts: ReceiptModel[] = []
+  constructor(
+    private dataSource: DataSource,
+    @InjectRepository(ReceiptEntity)
+    private receiptsRepository: Repository<ReceiptEntity>,
+    @InjectRepository(ReceiptProductEntity)
+    private receiptProductsRepository: Repository<ReceiptProductEntity>,
+  ) {}
 
-  async findById(id: string): Promise<ReceiptModel | undefined> {
-    let receipt = this.receipts.find((r) => r.id === id)
+  async findById(id: string): Promise<ReceiptModel | null> {
+    const receipt = await this.receiptsRepository.findOneBy({ id })
 
-    if (receipt) {
-      receipt = {
-        ...receipt,
-        products: [],
-      }
+    if (!receipt) {
+      return null
     }
 
-    return receipt
+    return this.mapToDto(receipt)
   }
 
-  async create(createReceiptModel: CreateReceiptModel): Promise<ReceiptModel> {
-    const newReceipt: ReceiptModel = {
-      ...createReceiptModel,
-      id: crypto.randomUUID(),
-      products: createReceiptModel.products.map((p) => ({
-        ...p,
-        id: crypto.randomUUID(),
-      })),
+  async create(input: CreateReceiptInput): Promise<ReceiptEntity> {
+    const newReceipt = this.receiptsRepository.create()
+    newReceipt.account = input.account
+    newReceipt.store = input.store
+    newReceipt.date = input.date
+    newReceipt.products = []
+
+    for (const inputProduct of input.products) {
+      const newReceiptProduct = this.receiptProductsRepository.create()
+
+      newReceiptProduct.name = inputProduct.name
+      newReceiptProduct.category = inputProduct.category
+      newReceiptProduct.quantity = inputProduct.quantity
+      newReceiptProduct.pricePerUnit = inputProduct.pricePerUnit
+      newReceiptProduct.totalPrice = inputProduct.totalPrice
+
+      newReceipt.products.push(newReceiptProduct)
     }
 
-    this.receipts.push(newReceipt)
+    await this.dataSource.transaction(async (em) => {
+      await em.save([...newReceipt.products, newReceipt])
+    })
 
     return newReceipt
   }
 
-  async update(updateReceiptModel: UpdateReceiptModel): Promise<ReceiptModel> {
-    const oldIndex = this.receipts.findIndex(
-      (r) => r.id === updateReceiptModel.id,
-    )
+  async update(input: UpdateReceiptInput): Promise<ReceiptModel> {
+    const receipt = await this.receiptsRepository.findOne({
+      where: { id: input.id },
+      relations: {
+        products: true,
+      },
+    })
 
-    if (oldIndex < 0) {
+    if (!receipt) {
       throw new NotFoundException(
-        `Couldn't find receipt with id: '${updateReceiptModel.id}'`,
+        `Couldn't find receipt with id: '${input.id}'`,
       )
     }
 
-    const oldReceipt = this.receipts[oldIndex]
-
-    const unknownProduct = updateReceiptModel.products.find(
-      (p) => p.id && oldReceipt.products.some((op) => op.id !== p.id),
+    const unknownProduct = input.products.find(
+      (p) => p.id && receipt.products.some((op) => op.id !== p.id),
     )
 
     if (unknownProduct) {
@@ -71,32 +82,65 @@ export class ReceiptsService {
       )
     }
 
-    const newReceipt: ReceiptModel = {
-      ...updateReceiptModel,
-      products: updateReceiptModel.products.map((p) => ({
-        ...p,
-        id: p.id || crypto.randomUUID(),
-      })),
+    receipt.store = input.store
+    receipt.account = input.account
+    receipt.date = input.date
+
+    const newInputProducts = input.products.filter((p) => !p.id)
+
+    const newProducts: ReceiptProductEntity[] = []
+
+    for (const newInputProduct of newInputProducts) {
+      const newProduct = this.receiptProductsRepository.create()
+      newProduct.name = newInputProduct.name
+      newProduct.category = newInputProduct.category
+      newProduct.quantity = newInputProduct.quantity
+      newProduct.totalPrice = newInputProduct.totalPrice
+      newProduct.pricePerUnit = newInputProduct.pricePerUnit
+
+      newProducts.push(newProduct)
     }
 
-    this.receipts.splice(oldIndex, 1, newReceipt)
+    receipt.products = [
+      ...receipt.products.filter((p) => !!p.id),
+      ...newProducts,
+    ]
 
-    return newReceipt
+    await this.dataSource.transaction(async (em) => {
+      await em.save([...newProducts, receipt])
+    })
+
+    return this.mapToDto(receipt)
   }
 
-  async findAll() {
-    return this.receipts
+  async getReceiptProducts(receiptId: string): Promise<ReceiptProductModel[]> {
+    const receiptProducts = await this.receiptProductsRepository.find({
+      where: { receiptId },
+    })
+
+    return receiptProducts.map(this.mapProductToDto)
   }
 
-  async getReceiptProducts(receiptId: string) {
-    const entityReceipt = this.receipts.find((r) => r.id === receiptId)
-
-    if (!entityReceipt) {
-      throw new NotFoundException(
-        `Couldn't find receipt with id: '${receiptId}'`,
-      )
+  private mapToDto(receipt: ReceiptEntity): ReceiptModel {
+    return {
+      id: receipt.id,
+      store: receipt.store,
+      date: receipt.date,
+      account: receipt.account,
+      products: receipt.products?.map(this.mapProductToDto),
     }
+  }
 
-    return entityReceipt.products
+  private mapProductToDto(
+    receiptProduct: ReceiptProductEntity,
+  ): ReceiptProductModel {
+    return {
+      id: receiptProduct.id,
+      totalPrice: receiptProduct.totalPrice,
+      pricePerUnit: receiptProduct.pricePerUnit,
+      quantity: receiptProduct.quantity,
+      category: receiptProduct.category,
+      name: receiptProduct.name,
+    }
   }
 }

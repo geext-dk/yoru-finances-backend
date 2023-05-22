@@ -7,10 +7,10 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql'
-import { CreateReceiptInput } from './dto/createReceipt.input'
-import { ReceiptModel } from './dto/receipt.model'
-import { ReceiptProductModel } from './dto/receiptProduct.model'
-import { UpdateReceiptInput } from './dto/updateReceipt.input'
+import { CreateReceiptInput } from './dtos/createReceipt.input'
+import { ReceiptModel } from './dtos/receipt.model'
+import { ReceiptProductModel } from './dtos/receiptProduct.model'
+import { UpdateReceiptInput } from './dtos/updateReceipt.input'
 import { ReceiptsService } from './receipts.service'
 
 @Resolver(() => ReceiptModel)
